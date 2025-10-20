@@ -25,7 +25,6 @@ export async function fetchAllReceipts(
 ): Promise<WhopReceipt[]> {
   try {
     const allReceipts: WhopReceipt[] = [];
-    let hasNextPage = true;
     const pageSize = 25; // Smaller page size to reduce complexity
 
     // while (hasNextPage) {
@@ -54,11 +53,8 @@ export async function fetchAllReceipts(
       const response = await whopSdk.payments.listReceiptsForCompany(params);
       console.log(JSON.stringify(response, null, 2));
       const receipts = response?.receipts?.nodes || [];
-      const pageInfo = response?.receipts?.pageInfo;
       
       allReceipts.push(...receipts.filter(receipt => receipt !== null) as WhopReceipt[]);
-      
-      hasNextPage = pageInfo?.hasNextPage || false;
       
       // Safety check to prevent infinite loops
     //   if (allReceipts.length > 1000) {

@@ -13,19 +13,18 @@ exports.getAllCheckoutLinks = getAllCheckoutLinks;
 const api_1 = require("@whop/api");
 const sdk_1 = __importDefault(require("@whop/sdk"));
 exports.whopSdk = (0, api_1.WhopServerSdk)({
-    appId: "app_yi6VozkdipMtUI",
-    appApiKey: "ZAY4nts6i0t14TrY-FTrTHXXz__E7kRyU1YjvE2GTrM",
-    onBehalfOfUserId: "user_753tM9RWnM1At",
-    companyId: "biz_1ZH7VJrbsBzY1D"
+    appId: "app_LKpopwLp7hWqPl",
+    appApiKey: "nx2VtnCee19yTjCUziHyDz5322zbAAwnvM4x7kQqYmI",
+    onBehalfOfUserId: "user_6qNaneyVrmasB",
+    companyId: "biz_rjBNIaeNIJHzaM"
 });
 exports.whopClient = new sdk_1.default({
-    appID: "app_yi6VozkdipMtUI",
-    apiKey: "ZAY4nts6i0t14TrY-FTrTHXXz__E7kRyU1YjvE2GTrM",
+    appID: "app_LKpopwLp7hWqPl",
+    apiKey: "nx2VtnCee19yTjCUziHyDz5322zbAAwnvM4x7kQqYmI",
 });
 async function fetchAllReceipts(companyId, startDate, endDate) {
     try {
         const allReceipts = [];
-        let hasNextPage = true;
         const pageSize = 25;
         const params = {
             companyId,
@@ -49,9 +48,7 @@ async function fetchAllReceipts(companyId, startDate, endDate) {
         const response = await exports.whopSdk.payments.listReceiptsForCompany(params);
         console.log(JSON.stringify(response, null, 2));
         const receipts = response?.receipts?.nodes || [];
-        const pageInfo = response?.receipts?.pageInfo;
         allReceipts.push(...receipts.filter(receipt => receipt !== null));
-        hasNextPage = pageInfo?.hasNextPage || false;
         return allReceipts;
     }
     catch (error) {
@@ -63,7 +60,7 @@ async function createProduct(title, description) {
     try {
         console.log('Creating product:', title);
         const product = await exports.whopClient.products.create({
-            company_id: "biz_1ZH7VJrbsBzY1D",
+            company_id: "biz_rjBNIaeNIJHzaM",
             title: title,
             description: description || `Product: ${title}`,
             visibility: 'visible',
@@ -83,7 +80,7 @@ async function createCheckoutLink(productId, internalName, title, price = "10.00
         console.log(`Creating checkout link for product ${productId} with internal name: ${internalName}`);
         const result = await exports.whopSdk.payments.createCheckoutSession({
             plan: {
-                companyId: "biz_1ZH7VJrbsBzY1D",
+                companyId: "biz_rjBNIaeNIJHzaM",
                 productId: productId,
                 title: title,
                 description: `Checkout link: ${internalName}`,
