@@ -80,11 +80,7 @@ export async function createProduct(
     
     const product = await whopClient.products.create({
       company_id: "biz_rjBNIaeNIJHzaM",
-      title: title,
-      description: description || `Product: ${title}`,
-      visibility: 'visible',
-      business_type: 'education_program',
-      industry_type: 'trading'
+      title: title
     });
 
     console.log('Product created successfully:', product.id);
