@@ -14,7 +14,7 @@ export const whopSdk: WhopServerSdk = WhopServerSdk({
 // Initialize Whop SDK for product creation
 export const whopClient = new Whop({
   appID: "app_LKpopwLp7hWqPl",
-  apiKey: "nx2VtnCee19yTjCUziHyDz5322zbAAwnvM4x7kQqYmI",
+  apiKey: "zPlBowxmY6JCsIZJzMeaQv9nCN6_0slSoCTSq8eFSC0",
 });
 
 // Fetch all receipts with pagination to avoid complexity limits
