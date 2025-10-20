@@ -95,8 +95,7 @@ export async function createProduct(
     console.log('Product created successfully:', product.id);
     return product;
   } catch (error: any) {
-    console.error(`Failed to create product:`, error.message);
-    throw error;
+    console.log(`Failed to create product:`, error.message);
   }
 }
 
