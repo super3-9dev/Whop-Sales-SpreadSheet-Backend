@@ -80,23 +80,16 @@ export async function createProduct(
   title: string,
   description?: string 
 ): Promise<any> {
-  try {
-    console.log('Creating product:', title);
-    
-    const product = await whopClient.products.create({
-      company_id: COMPANY_ID,
-      title: title,
-      description: description || `Product: ${title}`,
-      visibility: 'visible',
-      business_type: 'education_program',
-      industry_type: 'trading'
-    });
+  const product = await whopClient.products.create({
+    company_id: COMPANY_ID,
+    title: title,
+    description: description || `Product: ${title}`,
+    visibility: 'visible',
+    business_type: 'education_program',
+    industry_type: 'trading'
+  });
 
-    console.log('Product created successfully:', product.id);
-    return product;
-  } catch (error: any) {
-    console.log(`Failed to create product:`, error.message);
-  }
+  return product;
 }
 
 // Create a checkout link with internal name
