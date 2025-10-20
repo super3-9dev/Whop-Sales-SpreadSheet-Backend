@@ -78,14 +78,18 @@ export async function fetchAllReceipts(
 // Create a product
 export async function createProduct(
   title: string,
-  // description?: string 
+  description?: string 
 ): Promise<any> {
   try {
     console.log('Creating product:', title);
     
     const product = await whopClient.products.create({
       company_id: COMPANY_ID,
-      title: title
+      title: title,
+      description: description || `Product: ${title}`,
+      visibility: 'visible',
+      business_type: 'education_program',
+      industry_type: 'trading'
     });
 
     console.log('Product created successfully:', product.id);

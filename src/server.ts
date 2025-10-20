@@ -147,7 +147,7 @@ app.get('/api/config', (_req: Request, res: Response<ConfigResponse>) => {
 // Create a product
 app.post('/api/create-product', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { title } = req.body;
+    const { title, description } = req.body;
     
     if (!title) {
       res.status(400).json({
@@ -157,7 +157,7 @@ app.post('/api/create-product', async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const product = await createProduct(title);
+    const product = await createProduct(title, description);
     
     res.json({
       success: true,
@@ -267,7 +267,7 @@ app.post('/api/track-checkout-links', async (req: Request, res: Response): Promi
 // Complete workflow: Create product + checkout links + tracking
 app.post('/api/complete-workflow', async (req: Request, res: Response): Promise<void> => {
   try {
-    const { productTitle, checkoutCount } = req.body;
+    const { productTitle, productDescription, checkoutCount } = req.body;
     
     if (!productTitle) {
       res.status(400).json({
@@ -281,7 +281,7 @@ app.post('/api/complete-workflow', async (req: Request, res: Response): Promise<
     
     // Step 1: Create product
     console.log('Step 1: Creating product...');
-    const product = await createProduct(productTitle);
+    const product = await createProduct(productTitle, productDescription);
     
     // Step 2: Create checkout links
     console.log('Step 2: Creating checkout links...');
