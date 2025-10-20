@@ -20,7 +20,8 @@ export const whopSdk: WhopServerSdk = WhopServerSdk({
 // Initialize Whop SDK for product creation
 export const whopClient = new Whop({
   appID: APP_ID,
-  apiKey: API_KEY,
+  apiKey: APP_API_KEY,
+  baseURL: 'https://whop-sales-spread-sheet-frontend.vercel.app/',
 });
 
 // Fetch all receipts with pagination to avoid complexity limits
