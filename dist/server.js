@@ -27,6 +27,7 @@ app.get('/api/status', (_req, res) => {
 app.post('/api/generate-report', async (req, res) => {
     try {
         const { startDate, endDate } = req.body;
+        console.log(startDate, endDate);
         if (!startDate || !endDate) {
             res.status(400).json({
                 success: false,
@@ -49,7 +50,7 @@ app.post('/api/generate-report', async (req, res) => {
             return;
         }
         console.log(`Generating report for ${startDate} to ${endDate}`);
-        const allReceipts = await (0, whopApi_1.fetchAllReceipts)(config_1.config.companyId, startDate, endDate);
+        const allReceipts = await (0, whopApi_1.fetchAllReceipts)(config_1.config.companyId);
         if (allReceipts.length === 0) {
             res.json({
                 success: true,
@@ -109,6 +110,147 @@ app.get('/api/config', (_req, res) => {
         checkoutIdsCount: 0,
         hasApiKey: !!config_1.config.whopApiKey
     });
+});
+app.post('/api/create-product', async (req, res) => {
+    try {
+        const { title, description } = req.body;
+        if (!title) {
+            res.status(400).json({
+                success: false,
+                message: 'Title is required'
+            });
+            return;
+        }
+        const product = await (0, whopApi_1.createProduct)(title, description);
+        res.json({
+            success: true,
+            message: 'Product created successfully',
+            data: product
+        });
+    }
+    catch (error) {
+        console.error('Error creating product:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create product',
+            error: error.message
+        });
+    }
+});
+app.post('/api/create-checkout-link', async (req, res) => {
+    try {
+        const { productId, internalName, title, price, currency } = req.body;
+        if (!productId || !internalName || !title) {
+            res.status(400).json({
+                success: false,
+                message: 'productId, internalName, and title are required'
+            });
+            return;
+        }
+        const checkoutLink = await (0, whopApi_1.createCheckoutLink)(productId, internalName, title, price, currency);
+        res.json({
+            success: true,
+            message: 'Checkout link created successfully',
+            data: checkoutLink
+        });
+    }
+    catch (error) {
+        console.error('Error creating checkout link:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create checkout link',
+            error: error.message
+        });
+    }
+});
+app.post('/api/create-multiple-checkout-links', async (req, res) => {
+    try {
+        const { productId, count } = req.body;
+        if (!productId) {
+            res.status(400).json({
+                success: false,
+                message: 'productId is required'
+            });
+            return;
+        }
+        const checkoutLinks = await (0, whopApi_1.createMultipleCheckoutLinks)(productId, count || 10);
+        res.json({
+            success: true,
+            message: `Successfully created ${checkoutLinks.length} checkout links`,
+            data: checkoutLinks
+        });
+    }
+    catch (error) {
+        console.error('Error creating multiple checkout links:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create multiple checkout links',
+            error: error.message
+        });
+    }
+});
+app.post('/api/track-checkout-links', async (req, res) => {
+    try {
+        const { internalName, startDate, endDate } = req.body;
+        if (!internalName) {
+            res.status(400).json({
+                success: false,
+                message: 'internalName is required'
+            });
+            return;
+        }
+        const trackedReceipts = await (0, whopApi_1.trackCheckoutLinksByInternalName)(internalName, startDate, endDate);
+        res.json({
+            success: true,
+            message: `Found ${trackedReceipts.length} receipts for internal name: ${internalName}`,
+            data: trackedReceipts
+        });
+    }
+    catch (error) {
+        console.error('Error tracking checkout links:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to track checkout links',
+            error: error.message
+        });
+    }
+});
+app.post('/api/complete-workflow', async (req, res) => {
+    try {
+        const { productTitle, productDescription, checkoutCount } = req.body;
+        if (!productTitle) {
+            res.status(400).json({
+                success: false,
+                message: 'productTitle is required'
+            });
+            return;
+        }
+        console.log('Starting complete workflow...');
+        console.log('Step 1: Creating product...');
+        const product = await (0, whopApi_1.createProduct)(productTitle, productDescription);
+        console.log('Step 2: Creating checkout links...');
+        const checkoutLinks = await (0, whopApi_1.createMultipleCheckoutLinks)(product.id, checkoutCount || 10);
+        console.log('Step 3: Setting up tracking...');
+        await (0, whopApi_1.getAllCheckoutLinks)();
+        res.json({
+            success: true,
+            message: 'Complete workflow executed successfully',
+            data: {
+                product: product,
+                checkoutLinks: checkoutLinks,
+                trackingSetup: true,
+                internalNames: checkoutLinks.map(link => link.internalName)
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error in complete workflow:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to execute complete workflow',
+            error: error.message
+        });
+    }
 });
 app.use((error, _req, res, _next) => {
     console.error('Unhandled error:', error);

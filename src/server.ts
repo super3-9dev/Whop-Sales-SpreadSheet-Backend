@@ -3,7 +3,14 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { config, isDevelopment } from './config';
-import { fetchAllReceipts } from './whopApi';
+import { 
+  fetchAllReceipts, 
+  createProduct, 
+  createCheckoutLink, 
+  createMultipleCheckoutLinks, 
+  trackCheckoutLinksByInternalName,
+  getAllCheckoutLinks
+} from './whopApi';
 import { aggregateByDay, getSummaryStats } from './salesAggregator';
 import { exportDailySales } from './excelExporter';
 import { 
@@ -63,7 +70,7 @@ app.post('/api/generate-report', async (req: Request<{}, GenerateReportResponse,
     console.log(`Generating report for ${startDate} to ${endDate}`);
 
     // Fetch receipts data
-    const allReceipts = await fetchAllReceipts(config.companyId, startDate, endDate);
+    const allReceipts = await fetchAllReceipts(config.companyId);
     
     if (allReceipts.length === 0) {
       res.json({
@@ -135,6 +142,173 @@ app.get('/api/config', (_req: Request, res: Response<ConfigResponse>) => {
     checkoutIdsCount: 0, // No longer using checkout IDs
     hasApiKey: !!config.whopApiKey
   });
+});
+
+// Create a product
+app.post('/api/create-product', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { title, description } = req.body;
+    
+    if (!title) {
+      res.status(400).json({
+        success: false,
+        message: 'Title is required'
+      });
+      return;
+    }
+
+    const product = await createProduct(title, description);
+    
+    res.json({
+      success: true,
+      message: 'Product created successfully',
+      data: product
+    });
+  } catch (error: any) {
+    console.error('Error creating product:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create product',
+      error: error.message
+    });
+  }
+});
+
+// Create a single checkout link
+app.post('/api/create-checkout-link', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { productId, internalName, title, price, currency } = req.body;
+    
+    if (!productId || !internalName || !title) {
+      res.status(400).json({
+        success: false,
+        message: 'productId, internalName, and title are required'
+      });
+      return;
+    }
+
+    const checkoutLink = await createCheckoutLink(productId, internalName, title, price, currency);
+    
+    res.json({
+      success: true,
+      message: 'Checkout link created successfully',
+      data: checkoutLink
+    });
+  } catch (error: any) {
+    console.error('Error creating checkout link:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create checkout link',
+      error: error.message
+    });
+  }
+});
+
+// Create multiple checkout links
+app.post('/api/create-multiple-checkout-links', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { productId, count } = req.body;
+    
+    if (!productId) {
+      res.status(400).json({
+        success: false,
+        message: 'productId is required'
+      });
+      return;
+    }
+
+    const checkoutLinks = await createMultipleCheckoutLinks(productId, count || 10);
+    
+    res.json({
+      success: true,
+      message: `Successfully created ${checkoutLinks.length} checkout links`,
+      data: checkoutLinks
+    });
+  } catch (error: any) {
+    console.error('Error creating multiple checkout links:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create multiple checkout links',
+      error: error.message
+    });
+  }
+});
+
+// Track checkout links by internal name
+app.post('/api/track-checkout-links', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { internalName, startDate, endDate } = req.body;
+    
+    if (!internalName) {
+      res.status(400).json({
+        success: false,
+        message: 'internalName is required'
+      });
+      return;
+    }
+
+    const trackedReceipts = await trackCheckoutLinksByInternalName(internalName, startDate, endDate);
+    
+    res.json({
+      success: true,
+      message: `Found ${trackedReceipts.length} receipts for internal name: ${internalName}`,
+      data: trackedReceipts
+    });
+  } catch (error: any) {
+    console.error('Error tracking checkout links:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to track checkout links',
+      error: error.message
+    });
+  }
+});
+
+// Complete workflow: Create product + checkout links + tracking
+app.post('/api/complete-workflow', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { productTitle, productDescription, checkoutCount } = req.body;
+    
+    if (!productTitle) {
+      res.status(400).json({
+        success: false,
+        message: 'productTitle is required'
+      });
+      return;
+    }
+
+    console.log('Starting complete workflow...');
+    
+    // Step 1: Create product
+    console.log('Step 1: Creating product...');
+    const product = await createProduct(productTitle, productDescription);
+    
+    // Step 2: Create checkout links
+    console.log('Step 2: Creating checkout links...');
+    const checkoutLinks = await createMultipleCheckoutLinks(product.id, checkoutCount || 10);
+    
+    // Step 3: Setup tracking
+    console.log('Step 3: Setting up tracking...');
+    await getAllCheckoutLinks();
+    
+    res.json({
+      success: true,
+      message: 'Complete workflow executed successfully',
+      data: {
+        product: product,
+        checkoutLinks: checkoutLinks,
+        trackingSetup: true,
+        internalNames: checkoutLinks.map(link => link.internalName)
+      }
+    });
+  } catch (error: any) {
+    console.error('Error in complete workflow:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to execute complete workflow',
+      error: error.message
+    });
+  }
 });
 
 // Error handling middleware
