@@ -1,20 +1,26 @@
 import { WhopReceipt } from './types';
 import { WhopServerSdk } from '@whop/api';
 import Whop from '@whop/sdk';
+import dotenv from 'dotenv';
+dotenv.config();
 
-
+const APP_ID = process.env['APP_ID'] || '';
+const API_KEY = process.env['API_KEY'] || ''; 
+const APP_API_KEY = process.env['APPAPIKEY'] || '';
+const ON_BEHALF_OF_USER_ID = process.env['USERID'] || '';
+const COMPANY_ID = process.env['COMPANY_ID'] || '';
 
 export const whopSdk: WhopServerSdk = WhopServerSdk({
-  appId: "app_LKpopwLp7hWqPl",
-  appApiKey: "nx2VtnCee19yTjCUziHyDz5322zbAAwnvM4x7kQqYmI",
-  onBehalfOfUserId: "user_6qNaneyVrmasB",
-  companyId: "biz_rjBNIaeNIJHzaM"
+  appId: APP_ID,
+  appApiKey: APP_API_KEY,
+  onBehalfOfUserId: ON_BEHALF_OF_USER_ID,
+  companyId: COMPANY_ID
 });
 
 // Initialize Whop SDK for product creation
 export const whopClient = new Whop({
-  appID: "app_LKpopwLp7hWqPl",
-  apiKey: "zPlBowxmY6JCsIZJzMeaQv9nCN6_0slSoCTSq8eFSC0",
+  appID: APP_ID,
+  apiKey: API_KEY,
 });
 
 // Fetch all receipts with pagination to avoid complexity limits
@@ -73,13 +79,13 @@ export async function fetchAllReceipts(
 // Create a product
 export async function createProduct(
   title: string,
-  // description?: string
+  // description?: string 
 ): Promise<any> {
   try {
     console.log('Creating product:', title);
     
     const product = await whopClient.products.create({
-      company_id: "biz_rjBNIaeNIJHzaM",
+      company_id: COMPANY_ID,
       title: title
     });
 
@@ -104,7 +110,7 @@ export async function createCheckoutLink(
     
     const result = await whopSdk.payments.createCheckoutSession({
       plan: {
-        companyId: "biz_rjBNIaeNIJHzaM",
+        companyId: COMPANY_ID,
         productId: productId,
         title: title,
         description: `Checkout link: ${internalName}`,
@@ -205,7 +211,7 @@ export async function trackCheckoutLinksByInternalName(
     console.log(`Tracking checkout links for internal name: ${internalName}`);
     
     // Fetch all receipts
-    const allReceipts = await fetchAllReceipts("biz_1ZH7VJrbsBzY1D", startDate, endDate);
+    const allReceipts = await fetchAllReceipts(COMPANY_ID, startDate, endDate);
     
     // Filter receipts that contain the internal name in metadata or internal notes
     const trackedReceipts = allReceipts.filter(receipt => {
