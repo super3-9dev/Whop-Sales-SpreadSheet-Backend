@@ -33,35 +33,35 @@ export async function fetchAllReceipts(
     const pageSize = 25; // Smaller page size to reduce complexity
 
     // while (hasNextPage) {
-      const params: any = {
-        companyId,
-        first: pageSize,
-        // after: "pageInfo.endCursor",
-        filter: {
-          accessPassIds: ["prod_w1SblC5hEu81B"],
-          endDate: endDate ? Math.floor(new Date(endDate).getTime() / 1000) : undefined,
-          order: "created_at",
-          startDate: startDate ? Math.floor(new Date(startDate).getTime() / 1000) : undefined,
-          statuses: [
-            "failed", "succeeded"
-          ],
-        },
-      };
+    const params: any = {
+      companyId,
+      first: pageSize,
+      // after: "pageInfo.endCursor",
+      filter: {
+        accessPassIds: ["prod_w1SblC5hEu81B"],
+        endDate: endDate ? Math.floor(new Date(endDate).getTime() / 1000) : undefined,
+        order: "created_at",
+        startDate: startDate ? Math.floor(new Date(startDate).getTime() / 1000) : undefined,
+        statuses: [
+          "failed", "succeeded"
+        ],
+      },
+    };
 
-      // Convert date strings to Unix timestamps if provided
-      if (startDate) {
-        params.filter!.startDate = Math.floor(new Date(startDate).getTime() / 1000);
-      }
-      if (endDate) {
-        params.filter!.endDate = Math.floor(new Date(endDate).getTime() / 1000);
-      }
-      const response = await whopSdk.payments.listReceiptsForCompany(params);
-      console.log(JSON.stringify(response, null, 2));
-      const receipts = response?.receipts?.nodes || [];
-      
-      allReceipts.push(...receipts.filter(receipt => receipt !== null) as WhopReceipt[]);
-      
-      // Safety check to prevent infinite loops
+    // Convert date strings to Unix timestamps if provided
+    if (startDate) {
+      params.filter!.startDate = Math.floor(new Date(startDate).getTime() / 1000);
+    }
+    if (endDate) {
+      params.filter!.endDate = Math.floor(new Date(endDate).getTime() / 1000);
+    }
+    const response = await whopSdk.payments.listReceiptsForCompany(params);
+    console.log(JSON.stringify(response, null, 2));
+    const receipts = response?.receipts?.nodes || [];
+
+    allReceipts.push(...receipts.filter(receipt => receipt !== null) as WhopReceipt[]);
+
+    // Safety check to prevent infinite loops
     //   if (allReceipts.length > 1000) {
     //     console.warn('Reached maximum receipt limit (1000), stopping pagination');
     //     break;
@@ -78,7 +78,7 @@ export async function fetchAllReceipts(
 // Create a product
 export async function createProduct(
   title: string,
-  description?: string 
+  description?: string
 ): Promise<any> {
   let newProduct;
   try {
@@ -117,8 +117,8 @@ export async function createCheckoutLink(
   try {
     console.log(`Creating checkout link for product ${productId} with internal name: ${internalName}`);
 
-    
-    
+
+
     const result = await whopSdk.payments.createCheckoutSession({
       plan: {
         companyId: COMPANY_ID,
@@ -159,15 +159,15 @@ export async function createMultipleCheckoutLinks(
 ): Promise<any[]> {
   try {
     console.log(`Creating ${count} checkout links for product ${productId}`);
-    
+
     const checkoutLinks = [];
     const internalNames = generateRandomInternalNames(count);
-    
+
     for (let i = 0; i < count; i++) {
       const internalName = internalNames[i]!; // Non-null assertion since we know the array has the right length
       const title = `Plan ${i + 1} - ${internalName}`;
       const price = (Math.random() * 50 + 10).toFixed(2); // Random price between $10-$60
-      
+
       try {
         const checkoutLink = await createCheckoutLink(
           productId,
@@ -177,7 +177,7 @@ export async function createMultipleCheckoutLinks(
           "usd"
         );
         checkoutLinks.push(checkoutLink);
-        
+
         // Small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 500));
       } catch (error) {
@@ -185,7 +185,7 @@ export async function createMultipleCheckoutLinks(
         // Continue with other links even if one fails
       }
     }
-    
+
     console.log(`Successfully created ${checkoutLinks.length} checkout links`);
     return checkoutLinks;
   } catch (error: any) {
@@ -198,9 +198,9 @@ export async function createMultipleCheckoutLinks(
 function generateRandomInternalNames(count: number): string[] {
   const prefixes = ['premium', 'basic', 'pro', 'starter', 'advanced', 'ultimate', 'standard', 'deluxe', 'express', 'max'];
   const suffixes = ['plan', 'package', 'deal', 'offer', 'bundle', 'kit', 'suite', 'edition', 'version', 'tier'];
-  
+
   const names = new Set<string>();
-  
+
   while (names.size < count) {
     const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
     const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
@@ -208,7 +208,7 @@ function generateRandomInternalNames(count: number): string[] {
     const name = `${prefix}_${suffix}_${number}`;
     names.add(name);
   }
-  
+
   return Array.from(names);
 }
 
@@ -220,17 +220,16 @@ export async function trackCheckoutLinksByInternalName(
 ): Promise<any[]> {
   try {
     console.log(`Tracking checkout links for internal name: ${internalName}`);
-    
     // Fetch all receipts
     const allReceipts = await fetchAllReceipts(COMPANY_ID, startDate, endDate);
-    
+
     // Filter receipts that contain the internal name in metadata or internal notes
     const trackedReceipts = allReceipts.filter(receipt => {
       // Check if receipt plan title contains the internal name
       if (receipt.plan && receipt.plan.title && receipt.plan.title.includes(internalName)) {
         return true;
       }
-      
+
       // Check if receipt has metadata with internal name (using any type for flexibility)
       const receiptAny = receipt as any;
       if (receiptAny.metadata && typeof receiptAny.metadata === 'object') {
@@ -239,10 +238,10 @@ export async function trackCheckoutLinksByInternalName(
           return true;
         }
       }
-      
+
       return false;
     });
-    
+
     console.log(`Found ${trackedReceipts.length} receipts for internal name: ${internalName}`);
     return trackedReceipts;
   } catch (error: any) {
@@ -252,14 +251,26 @@ export async function trackCheckoutLinksByInternalName(
 }
 
 // Get all checkout links with their internal names
-export async function getAllCheckoutLinks(): Promise<any[]> {
+export async function getAllCheckoutLinks(productId: string): Promise<any[]> {
   try {
     console.log('Fetching all checkout links...');
-    
+
+    const result = await whopSdk.companies.listPlans({
+      companyId: COMPANY_ID,
+      after: "pageInfo.endCursor",
+      before: "pageInfo.startCursor",
+      filter: {
+        accessPassId: productId,
+      },
+      first: 10,
+      last: 10,
+    });
+
+    console.log(result)
     // This would typically fetch from a database or API
     // For now, we'll return a placeholder since we don't have a direct API to list checkout links
     // In a real implementation, you'd store these in a database when creating them
-    
+
     return [];
   } catch (error: any) {
     console.error('Failed to get checkout links:', error.message);

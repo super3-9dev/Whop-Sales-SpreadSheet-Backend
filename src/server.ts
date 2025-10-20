@@ -282,14 +282,14 @@ app.post('/api/complete-workflow', async (req: Request, res: Response): Promise<
     // Step 1: Create product
     console.log('Step 1: Creating product...');
     const product = await createProduct(productTitle, productDescription);
-    console.log(product)
+    
     // Step 2: Create checkout links
     console.log('Step 2: Creating checkout links...');
     const checkoutLinks = await createMultipleCheckoutLinks(product.id, checkoutCount || 10);
     
     // Step 3: Setup tracking
     console.log('Step 3: Setting up tracking...');
-    await getAllCheckoutLinks();
+    await getAllCheckoutLinks(product.id);
     
     res.json({
       success: true,
