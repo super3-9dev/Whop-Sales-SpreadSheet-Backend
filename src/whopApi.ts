@@ -88,7 +88,7 @@ export async function createProduct(
     business_type: 'education_program',
     industry_type: 'trading'
   });
-
+  console.log(product);
   return product;
 }
 
