@@ -80,16 +80,30 @@ export async function createProduct(
   title: string,
   description?: string 
 ): Promise<any> {
-  const product = await whopClient.products.create({
-    company_id: COMPANY_ID,
-    title: title,
-    description: description || `Product: ${title}`,
-    visibility: 'visible',
-    business_type: 'education_program',
-    industry_type: 'trading'
-  });
-  console.log(product);
-  return product;
+  let newProduct;
+  try {
+    const product = await whopClient.products.create({
+      company_id: COMPANY_ID,
+      title: title,
+      description: description || `Product: ${title}`,
+      visibility: 'visible',
+      business_type: 'education_program',
+      industry_type: 'trading'
+    });
+    newProduct = product;
+  } catch (error: any) {
+    for await (const productListItem of whopClient.products.list({ company_id: COMPANY_ID })) {
+      if (productListItem.title === title) {
+        newProduct = productListItem;
+        break;
+      }
+    }
+    if (newProduct === undefined) {
+      console.log(`Product ${title} not found`);
+      return undefined;
+    }
+    return newProduct;
+  }
 }
 
 // Create a checkout link with internal name
@@ -102,6 +116,8 @@ export async function createCheckoutLink(
 ): Promise<any> {
   try {
     console.log(`Creating checkout link for product ${productId} with internal name: ${internalName}`);
+
+    
     
     const result = await whopSdk.payments.createCheckoutSession({
       plan: {
