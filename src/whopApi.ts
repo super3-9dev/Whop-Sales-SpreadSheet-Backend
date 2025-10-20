@@ -73,7 +73,7 @@ export async function fetchAllReceipts(
 // Create a product
 export async function createProduct(
   title: string,
-  description?: string
+  // description?: string
 ): Promise<any> {
   try {
     console.log('Creating product:', title);
